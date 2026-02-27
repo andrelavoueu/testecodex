@@ -1,0 +1,7 @@
+Cliente: Orion Tech
+Viajante: Pedro Alves
+Data da viagem: 2026-06-15
+Destino: Bogotá
+Consultor responsável: Juliana Prado
+Status: Aguardando aprovação
+Data da compra: 2026-06-02
