@@ -8,6 +8,8 @@ from .models import TripRecord
 FIELD_ALIASES = {
     "cliente": "client",
     "viajante": "traveler",
+    "email do viajante": "traveler_email",
+    "e-mail do viajante": "traveler_email",
     "data da viagem": "travel_date",
     "destino": "destination",
     "consultor": "consultant",
@@ -59,9 +61,12 @@ def parse_email_content(content: str, source_email: str) -> TripRecord:
             f"E-mail '{source_email}' sem campos obrigatórios: {missing_list}"
         )
 
+    traveler_email = parsed.get("traveler_email") or None
+
     return TripRecord(
         client=parsed["client"],
         traveler=parsed["traveler"],
+        traveler_email=traveler_email,
         travel_date=_parse_date(parsed["travel_date"]),
         purchase_date=_parse_date(parsed["purchase_date"]),
         destination=parsed["destination"],

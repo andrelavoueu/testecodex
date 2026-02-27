@@ -41,6 +41,7 @@ def print_trips(db_path: str) -> None:
                     [
                         row["client"],
                         row["traveler"],
+                        row["traveler_email"] or "-",
                         row["travel_date"],
                         row["destination"],
                         row["consultant"],

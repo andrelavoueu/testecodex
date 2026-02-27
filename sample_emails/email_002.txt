@@ -1,5 +1,6 @@
 Cliente: Orion Tech
 Viajante: Pedro Alves
+Email do viajante: pedro.alves@orion.com
 Data da viagem: 2026-06-15
 Destino: Bogotá
 Consultor responsável: Juliana Prado

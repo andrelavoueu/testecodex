@@ -21,6 +21,7 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             client TEXT NOT NULL,
             traveler TEXT NOT NULL,
+            traveler_email TEXT,
             travel_date TEXT NOT NULL,
             purchase_date TEXT NOT NULL,
             purchase_lead_days INTEGER NOT NULL,
@@ -32,6 +33,13 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+
+    columns = {
+        row["name"] for row in conn.execute("PRAGMA table_info(trips)").fetchall()
+    }
+    if "traveler_email" not in columns:
+        conn.execute("ALTER TABLE trips ADD COLUMN traveler_email TEXT")
+
     conn.commit()
 
 
@@ -41,6 +49,7 @@ def upsert_trip(conn: sqlite3.Connection, record: TripRecord) -> None:
         INSERT INTO trips (
             client,
             traveler,
+            traveler_email,
             travel_date,
             purchase_date,
             purchase_lead_days,
@@ -48,10 +57,11 @@ def upsert_trip(conn: sqlite3.Connection, record: TripRecord) -> None:
             consultant,
             status,
             source_email
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(source_email) DO UPDATE SET
             client=excluded.client,
             traveler=excluded.traveler,
+            traveler_email=excluded.traveler_email,
             travel_date=excluded.travel_date,
             purchase_date=excluded.purchase_date,
             purchase_lead_days=excluded.purchase_lead_days,
@@ -62,6 +72,7 @@ def upsert_trip(conn: sqlite3.Connection, record: TripRecord) -> None:
         (
             record.client,
             record.traveler,
+            record.traveler_email,
             record.travel_date.isoformat(),
             record.purchase_date.isoformat(),
             record.purchase_lead_days,
@@ -80,6 +91,7 @@ def list_trips(conn: sqlite3.Connection) -> list[sqlite3.Row]:
         SELECT
             client,
             traveler,
+            traveler_email,
             travel_date,
             purchase_date,
             purchase_lead_days,

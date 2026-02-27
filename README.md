@@ -1,84 +1,60 @@
 # Plataforma Operacional de Viagens Corporativas
 
-Este repositório inicia a construção de uma aplicação interna para agência de viagens corporativas.
+Aplicação interna para sua agência transformar e-mails operacionais em dados estruturados, visualizar indicadores e disparar comunicações automáticas para viajantes.
 
-## Arquitetura proposta (em etapas)
+## Para quem é leigo: por onde começar
 
-### Etapa 1 — Ingestão e estruturação dos e-mails (MVP atual)
-Objetivo: transformar e-mails operacionais em registros estruturados de viagem.
-
-- Conector de e-mail (inicialmente via arquivos `.txt`, depois Gmail API)
-- Parser de conteúdo operacional
-- Normalização de campos
-- Persistência em banco SQLite
-- Indicador calculado: antecedência de compra (dias)
-
-### Etapa 2 — Sincronização de caixas da equipe + API/Dashboard (entregue)
-Objetivo: trazer os dados para um painel interno em navegador.
-
-- Sincronizador IMAP para múltiplas contas (compatível com Gmail)
-- Persistência idempotente no SQLite
-- API HTTP para consultas de viagens e KPIs
-- Dashboard web simples para visualização operacional
-
-### Etapa 3 — Comunicação automática com viajantes
-Objetivo: envio programado de mensagens personalizadas.
-
-- Motor de templates de mensagens
-- Gatilhos por data da viagem (D-7, D-2, D-1 etc.)
-- Tipos de comunicação:
-  - dicas de destino
-  - lembrete de check-in
-  - alertas pré-embarque
-
-### Etapa 4 — Integrações e governança
-Objetivo: produção com segurança e escalabilidade.
-
-- OAuth para múltiplas contas Gmail da operação
-- Logs, rastreabilidade e monitoramento
-- Controle de permissões por perfil
-- Tratamento de falhas e reprocessamento
-
-## Módulos funcionais disponíveis
-
-### 1) Ingestão por arquivos locais (`.txt`)
-
-Lê e-mails operacionais em texto (`sample_emails/*.txt`), extrai campos, calcula antecedência e salva em `data/travel_ops.db`.
-
+### Passo 1) Testar com e-mails de exemplo (sem integrar Gmail ainda)
 ```bash
 python -m src.travel_ops.ingest --input-dir sample_emails --db-path data/travel_ops.db --list
 ```
 
-### 2) Sincronização de múltiplas contas por IMAP
-
-Use `config.imap.example.json` como base e configure variáveis de ambiente com as senhas/app-passwords.
-
-```bash
-cp config.imap.example.json config.imap.json
-# export EMAIL_PASS_OPERACAO1='***'
-# export EMAIL_PASS_OPERACAO2='***'
-python -m src.travel_ops.sync_inboxes --config config.imap.json --db-path data/travel_ops.db
-```
-
-### 3) API + dashboard interno no navegador
-
-Suba o servidor HTTP:
-
+### Passo 2) Subir dashboard no navegador
 ```bash
 python -m src.travel_ops.server --db-path data/travel_ops.db --host 0.0.0.0 --port 8000
 ```
+Abra `http://localhost:8000/`.
 
-Acesse:
-- `http://localhost:8000/` (dashboard)
-- `http://localhost:8000/api/trips` (lista de viagens)
-- `http://localhost:8000/api/kpis` (indicadores)
-- `http://localhost:8000/health` (saúde)
+### Passo 3) Simular mensagens automáticas para viajantes
+```bash
+python -m src.travel_ops.messaging --db-path data/travel_ops.db --reference-date 2026-05-10 --dry-run
+```
 
-## Formato esperado de conteúdo operacional
+---
+
+## Arquitetura em etapas
+
+### Etapa 1 — Ingestão e estruturação dos e-mails (entregue)
+- Parser de conteúdo operacional
+- Normalização de campos
+- Persistência em SQLite
+- Cálculo de antecedência de compra
+
+### Etapa 2 — Sincronização de caixas + API/Dashboard (entregue)
+- Sync IMAP de múltiplas contas (compatível com Gmail)
+- API HTTP (`/api/trips`, `/api/kpis`, `/api/status-breakdown`)
+- Dashboard com filtros e paginação
+
+### Etapa 3 — Comunicação automática com viajantes (entregue em MVP)
+- Gatilhos por data (D-7, D-2, D-1)
+- Dry-run para validação
+- Envio SMTP real quando variáveis estiverem configuradas
+
+### Etapa 4 — Governança (próxima)
+- OAuth Gmail no lugar de senha IMAP
+- Logs centralizados e monitoramento
+- Controle de acesso por perfil
+
+---
+
+## Campos extraídos do e-mail operacional
+
+Formato aceito:
 
 ```txt
 Cliente: Empresa X
 Viajante: Nome Sobrenome
+Email do viajante: nome@empresa.com
 Data da viagem: 2026-04-10
 Destino: Lisboa
 Consultor: Ana Souza
@@ -86,6 +62,78 @@ Status: Emitido
 Data da compra: 2026-03-25
 ```
 
-## Próximo passo recomendado
+Campos obrigatórios: cliente, viajante, data da viagem, data da compra, destino, consultor, status.  
+Campo opcional: email do viajante.
 
-Implementar OAuth Gmail (substituindo senha IMAP), agendamento da sincronização e módulo de comunicação automática para o viajante com templates por destino e gatilhos por data.
+---
+
+## Sincronização de múltiplas contas (IMAP)
+
+1) Copie o arquivo exemplo:
+```bash
+cp config.imap.example.json config.imap.json
+```
+
+2) Defina as senhas/app-passwords das contas:
+```bash
+export EMAIL_PASS_OPERACAO1='***'
+export EMAIL_PASS_OPERACAO2='***'
+```
+
+3) Execute sync:
+```bash
+python -m src.travel_ops.sync_inboxes --config config.imap.json --db-path data/travel_ops.db
+```
+
+---
+
+## API e dashboard
+
+Subir servidor:
+```bash
+python -m src.travel_ops.server --db-path data/travel_ops.db --host 0.0.0.0 --port 8000
+```
+
+Endpoints:
+- `GET /health`
+- `GET /api/kpis`
+- `GET /api/status-breakdown`
+- `GET /api/trips?page=1&page_size=10&client=...&consultant=...&status=...`
+
+### Proteção simples por API key (opcional)
+Se definir a variável `TRAVEL_OPS_API_KEY`, os endpoints `/api/*` exigirão header `X-API-Key`.
+
+Exemplo:
+```bash
+export TRAVEL_OPS_API_KEY='minha-chave-interna'
+curl -H 'X-API-Key: minha-chave-interna' 'http://127.0.0.1:8000/api/kpis'
+```
+
+---
+
+## Mensagens automáticas ao viajante
+
+### 1) Simulação (recomendado primeiro)
+```bash
+python -m src.travel_ops.messaging --db-path data/travel_ops.db --reference-date 2026-05-10 --dry-run
+```
+
+### 2) Envio real por SMTP
+Configure:
+```bash
+export SMTP_HOST='smtp.seu-provedor.com'
+export SMTP_PORT='587'
+export SMTP_USER='usuario'
+export SMTP_PASS='senha'
+export SMTP_FROM='operacao@suaagencia.com'
+```
+
+Depois execute sem `--dry-run`:
+```bash
+python -m src.travel_ops.messaging --db-path data/travel_ops.db --reference-date 2026-05-10
+```
+
+Tipos automáticos:
+- D-7: dicas do destino
+- D-2: lembrete de check-in
+- D-1: alerta pré-embarque

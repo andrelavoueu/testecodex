@@ -8,6 +8,7 @@ class EmailParserTests(unittest.TestCase):
         content = """
 Cliente: Cliente A
 Viajante: Pessoa B
+Email do viajante: pessoa@cliente.com
 Data da viagem: 2026-03-10
 Destino: Recife
 Consultor: Ana
@@ -19,6 +20,7 @@ Data da compra: 2026-03-01
 
         self.assertEqual(record.client, "Cliente A")
         self.assertEqual(record.traveler, "Pessoa B")
+        self.assertEqual(record.traveler_email, "pessoa@cliente.com")
         self.assertEqual(record.destination, "Recife")
         self.assertEqual(record.purchase_lead_days, 9)
 

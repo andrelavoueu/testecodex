@@ -12,6 +12,7 @@ class TripRecord:
     consultant: str
     status: str
     source_email: str
+    traveler_email: str | None = None
 
     @property
     def purchase_lead_days(self) -> int:
