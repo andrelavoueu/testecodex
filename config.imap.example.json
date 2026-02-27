@@ -1,0 +1,18 @@
+{
+  "accounts": [
+    {
+      "email": "operacao1@agencia.com",
+      "imap_server": "imap.gmail.com",
+      "password_env": "EMAIL_PASS_OPERACAO1",
+      "folder": "INBOX",
+      "search_criteria": "UNSEEN"
+    },
+    {
+      "email": "operacao2@agencia.com",
+      "imap_server": "imap.gmail.com",
+      "password_env": "EMAIL_PASS_OPERACAO2",
+      "folder": "INBOX",
+      "search_criteria": "UNSEEN"
+    }
+  ]
+}

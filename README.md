@@ -13,16 +13,13 @@ Objetivo: transformar e-mails operacionais em registros estruturados de viagem.
 - Persistência em banco SQLite
 - Indicador calculado: antecedência de compra (dias)
 
-### Etapa 2 — Dashboard interno web
-Objetivo: disponibilizar visão operacional para equipe.
+### Etapa 2 — Sincronização de caixas da equipe + API/Dashboard (entregue)
+Objetivo: trazer os dados para um painel interno em navegador.
 
-- API de leitura dos registros
-- Interface web com filtros por cliente, consultor, status e período
-- KPIs principais:
-  - volume de viagens por período
-  - média de antecedência de compra
-  - distribuição por status
-  - top destinos e clientes
+- Sincronizador IMAP para múltiplas contas (compatível com Gmail)
+- Persistência idempotente no SQLite
+- API HTTP para consultas de viagens e KPIs
+- Dashboard web simples para visualização operacional
 
 ### Etapa 3 — Comunicação automática com viajantes
 Objetivo: envio programado de mensagens personalizadas.
@@ -42,25 +39,42 @@ Objetivo: produção com segurança e escalabilidade.
 - Controle de permissões por perfil
 - Tratamento de falhas e reprocessamento
 
-## Primeiro módulo funcional implementado
+## Módulos funcionais disponíveis
 
-Foi implementado o módulo **Ingestão + Extração + Persistência**.
+### 1) Ingestão por arquivos locais (`.txt`)
 
-### O que ele faz
+Lê e-mails operacionais em texto (`sample_emails/*.txt`), extrai campos, calcula antecedência e salva em `data/travel_ops.db`.
 
-1. Lê e-mails operacionais em texto (`sample_emails/*.txt`)
-2. Extrai os campos:
-   - cliente
-   - viajante
-   - data da viagem
-   - destino
-   - consultor responsável
-   - status da viagem
-   - data da compra
-3. Calcula automaticamente a **antecedência de compra**
-4. Salva os registros em banco SQLite (`data/travel_ops.db`)
+```bash
+python -m src.travel_ops.ingest --input-dir sample_emails --db-path data/travel_ops.db --list
+```
 
-### Formato esperado do e-mail
+### 2) Sincronização de múltiplas contas por IMAP
+
+Use `config.imap.example.json` como base e configure variáveis de ambiente com as senhas/app-passwords.
+
+```bash
+cp config.imap.example.json config.imap.json
+# export EMAIL_PASS_OPERACAO1='***'
+# export EMAIL_PASS_OPERACAO2='***'
+python -m src.travel_ops.sync_inboxes --config config.imap.json --db-path data/travel_ops.db
+```
+
+### 3) API + dashboard interno no navegador
+
+Suba o servidor HTTP:
+
+```bash
+python -m src.travel_ops.server --db-path data/travel_ops.db --host 0.0.0.0 --port 8000
+```
+
+Acesse:
+- `http://localhost:8000/` (dashboard)
+- `http://localhost:8000/api/trips` (lista de viagens)
+- `http://localhost:8000/api/kpis` (indicadores)
+- `http://localhost:8000/health` (saúde)
+
+## Formato esperado de conteúdo operacional
 
 ```txt
 Cliente: Empresa X
@@ -72,18 +86,6 @@ Status: Emitido
 Data da compra: 2026-03-25
 ```
 
-### Executando
-
-```bash
-python -m src.travel_ops.ingest --input-dir sample_emails --db-path data/travel_ops.db
-```
-
-### Consultando registros rapidamente
-
-```bash
-python -m src.travel_ops.ingest --input-dir sample_emails --db-path data/travel_ops.db --list
-```
-
 ## Próximo passo recomendado
 
-Implementar o conector Gmail API para múltiplas caixas de entrada e agendar a execução da ingestão (cron/job), mantendo o parser e o banco já criados neste MVP.
+Implementar OAuth Gmail (substituindo senha IMAP), agendamento da sincronização e módulo de comunicação automática para o viajante com templates por destino e gatilhos por data.
