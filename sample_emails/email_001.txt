@@ -1,0 +1,8 @@
+Cliente: ACME Brasil
+Viajante: Mariana Costa
+Email do viajante: mariana.costa@acme.com
+Data da viagem: 2026-05-20
+Destino: Santiago
+Consultor: Rafael Lima
+Status: Emitido
+Data da compra: 2026-05-01
