@@ -87,6 +87,37 @@ python -m src.travel_ops.sync_inboxes --config config.imap.json --db-path data/t
 
 ---
 
+
+## Operação contínua (modo produção simplificado)
+
+Se você quer deixar tudo rodando automaticamente (sync + mensagens), use o worker:
+
+```bash
+python -m src.travel_ops.worker \
+  --config config.imap.json \
+  --db-path data/travel_ops.db \
+  --interval-seconds 900 \
+  --messaging-dry-run
+```
+
+- `--once`: executa um ciclo único e encerra (ótimo para teste).
+- `--sync-dry-run`: valida sync sem gravar no banco.
+- `--messaging-dry-run`: simula envios sem SMTP real.
+
+Exemplo de ciclo único:
+
+```bash
+python -m src.travel_ops.worker \
+  --config config.imap.json \
+  --db-path data/travel_ops.db \
+  --once \
+  --sync-dry-run \
+  --messaging-dry-run \
+  --reference-date 2026-05-10
+```
+
+---
+
 ## API e dashboard
 
 Subir servidor:
